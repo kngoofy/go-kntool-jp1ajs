@@ -1,60 +1,99 @@
-// package main は、JP1/AJS 定義などをパースするためのデータモデルを定義します。
+// =============================================================================
+// パッケージ: model
+// 概要: JP1/AJS（Hitachi Job Management Partner 1/Automatic Job Management System）の
+//
+//	ユニット定義をパースするためのデータモデルを定義します。
+//
+// 主な構造体:
+//   - UnitParm:  ユニットの権限パラメータ
+//   - UnitBlock: 抽象構文木のノード（ユニットブロック）
+//   - ArParm:    先行・後続関係パラメータ
+//   - NetUnit:   ネットワークユニット（ジョブネット）
+//   - JobUnit:   ジョブユニット
+//   - Unit:      全ユニットの共通ベース構造体
+//
+// =============================================================================
 package model
 
+// =============================================================================
+// UnitParm: ユニットの権限パラメータを保持する構造体
+// JP1/AJSのユニット定義行 "unit=名前,パーミッション,ユーザー,リソースグループ:..." から抽出
+// =============================================================================
 type UnitParm struct {
-	PermissionMode    string
-	Jp1UserName       string
-	Jp1ResourcesGroup string
+	PermissionMode    string // パーミッションモード（例: 0000, 0755など）
+	Jp1UserName       string // JP1ユーザー名（実行権限を持つユーザー）
+	Jp1ResourcesGroup string // JP1リソースグループ名（アクセス制御用）
 }
+
+// =============================================================================
+// UnitBlock: 抽象構文木（AST）のノードを表す構造体
+// ユニット定義ファイルの階層構造を表現し、親子関係を持つ
+// =============================================================================
 type UnitBlock struct {
-	UnitName string
-	UnitParm
-	UnitAbsoluteName string
-	Content          string
-	ContentLine      []string
-	Children         []*UnitBlock
-	ParentUnitName   string
+	UnitName         string       // ユニット名
+	UnitParm                      // 権限パラメータ（埋め込み構造体）
+	UnitAbsoluteName string       // ユニットの絶対パス名（例: /親/子/孫）
+	Content          string       // ブロック内のコンテンツ（改行区切りの連結文字列）
+	ContentLine      []string     // ブロック内のコンテンツ（各行のスライス）
+	Children         []*UnitBlock // 子ユニットブロックへのポインタスライス
+	ParentUnitName   string       // 親ユニット名
+	// ※ 以下はUnitParmに統合済み（後方互換用にコメントとして保持）
 	// PermissionMode    string
 	// Jp1UserName       string
 	// Jp1ResourcesGroup string
 }
 
+// =============================================================================
+// ArParm: 先行・後続関係（arパラメータ）を保持する構造体
+// JP1/AJSの ar=(f=先行,t=後続,関係種別); 形式から抽出
+// =============================================================================
 type ArParm struct {
-	UnitName         string
-	Prior            string
-	Following        string
-	Category         string
-	UnitAbsoluteName string
+	UnitName         string // このAR定義が属するユニット名
+	Prior            string // 先行ユニット名（f=の値）
+	Following        string // 後続ユニット名（t=の値）
+	Category         string // 関係種別（con: 継続, seq: 順序など）
+	UnitAbsoluteName string // ユニットの絶対パス名
 }
 
+// =============================================================================
+// NetUnit: ネットワークユニット（ty=n）のパラメータを保持する構造体
+// ジョブネットとも呼ばれ、複数のジョブをまとめてスケジュール実行する単位
+// =============================================================================
 type NetUnit struct {
-	UnitName         string
-	Sz               string
-	Ty               string
-	Cm               string
-	Ha               string
-	Sd               string
-	St               string
-	Cy               string
-	Sh               string
-	Shd              string
-	De               string
-	UnitAbsoluteName string
+	UnitName         string // ユニット名
+	Sz               string // sz: サイズ（フローチャートの表示サイズ）
+	Ty               string // ty: ユニット種別（"n" = ネットワーク）
+	Cm               string // cm: コメント（ユニットの説明）
+	Ha               string // ha: ホストエージェント名
+	Sd               string // sd: 開始日（スケジュール開始日）
+	St               string // st: 開始時刻（スケジュール開始時刻）
+	Cy               string // cy: 実行サイクル（日毎、週毎など）
+	Sh               string // sh: スケジュールホスト名
+	Shd              string // shd: スケジュール日
+	De               string // de: 遅延監視設定
+	UnitAbsoluteName string // ユニットの絶対パス名
 }
 
+// =============================================================================
+// JobUnit: ジョブユニット（ty=j）のパラメータを保持する構造体
+// 実際のジョブ（スクリプトやコマンド）を実行する最小単位
+// =============================================================================
 type JobUnit struct {
-	UnitName         string
-	Ty               string
-	Cm               string
-	Ha               string
-	Te               string
-	Tho              string
-	Eu               string
-	Un               string
-	UnitAbsoluteName string
+	UnitName         string // ユニット名
+	Ty               string // ty: ユニット種別（"j" = ジョブ）
+	Cm               string // cm: コメント（ユニットの説明）
+	Ha               string // ha: ホストエージェント名（実行先ホスト）
+	Te               string // te: 実行ファイル名（スクリプトパス）
+	Tho              string // tho: タイムアウト時間（分）
+	Eu               string // eu: 実行ユーザー種別（ent: 登録ユーザーなど）
+	Un               string // un: 実行ユーザー名
+	UnitAbsoluteName string // ユニットの絶対パス名
 }
 
-// Unit は、全てのユニット（ジョブ、ネット、グループ等）のベースとなる共通構造体です。
+// =============================================================================
+// Unit: 全てのユニット（ジョブ、ネット、グループ等）のベースとなる共通構造体
+// 構造体の埋め込み（エンベディング）により他のユニット型で再利用
+// =============================================================================
 type Unit struct {
 	UnitName       string   // ユニット名
 	UnitAbsName    string   // フルパス名（絶対名）
@@ -65,38 +104,56 @@ type Unit struct {
 	ChildPointer   *any     // 子要素へのポインタ（拡張用）
 }
 
-// // グループUnit
+// =============================================================================
+// グループユニット（将来拡張用）
+// JP1/AJSで複数のユニットをまとめるグループユニット
+// =============================================================================
 // type UnitGroup struct {
 // 	Unit
 // }
 
-// ネットUnit
+// =============================================================================
+// UnitNet: ネットワークユニット（新構造）
+// Unitをベースにし、el、ar、szの情報を保持
+// =============================================================================
 type UnitNet struct {
-	Unit
-	El
-	Ar
-	Sz
+	Unit // 共通ユニット情報（埋め込み）
+	El   // el: 要素配置情報
+	Ar   // ar: 先行・後続関係
+	Sz   // sz: サイズ情報
 }
 
-// ジョブUnit
+// =============================================================================
+// UnitJob: ジョブユニット（新構造）
+// Unitをベースにし、ジョブ固有の情報を追加予定
+// =============================================================================
 type UnitJob struct {
-	Unit
+	Unit // 共通ユニット情報（埋め込み）
 }
 
-// sz
+// =============================================================================
+// Sz: サイズパラメータを保持する構造体
+// フローチャート上のユニット表示サイズを定義
+// =============================================================================
 type Sz struct {
-	Size string
+	Size string // サイズ値（例: "80,48"）
 }
 
-// el
+// =============================================================================
+// El: 要素（Element）パラメータを保持する構造体
+// フローチャート上のユニット配置位置を定義
+// =============================================================================
 type El struct {
-	UnitName string
-	Location string
+	UnitName string // 対象ユニット名
+	Location string // 配置座標（例: "160,96"）
 }
 
-// el
+// =============================================================================
+// Ar: 先行・後続関係（Relation）を保持する構造体
+// ユニット間の実行順序や依存関係を定義
+// =============================================================================
 type Ar struct {
-	f string
-	t string
-	n string
+	f string // f: 先行ユニット名（from）
+	t string // t: 後続ユニット名（to）
+	n string // n: 関係種別（con: 継続, seq: 順序など）
 }
