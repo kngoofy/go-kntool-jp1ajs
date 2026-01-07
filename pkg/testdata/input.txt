@@ -1,0 +1,10 @@
+text before
+{
+  block1 {
+    nested
+  }
+}
+text after
+{
+  block2
+}

@@ -1,0 +1,33 @@
+unit=ajs01,,jp1user,;
+{
+    ty=n;
+    cm="AJS01ジョブネット"
+    unit=jobnet01,,jp1user,:
+    {
+        ty=n;
+        unit=job01-01,,jp1user,:
+        {
+            ty=j;
+        }
+        unit=job01-02,,jp1user,:
+        {
+            ty=j;
+        }
+        unit=FLCK_01,,jp1user,:
+        {
+            ty=flwj;
+        }
+    }
+    unit=jobnet02,,jp1user,:
+    {
+        ty=n;
+        unit=job02-01,,jp1user,:
+        {
+            ty=j;
+        }
+        unit=job02-02,,jp1user,:
+        {
+            ty=j;
+        }
+    }
+}

@@ -1,0 +1,13 @@
+
+#
+defDataDir: "../../pkg/testdata/"
+# defDataDir: 'C:\tmp\data\'
+templateBookName: "template/Template-KnToolsExcelAjs.xlsx"
+makedBookName: "generate/ExcelJp1Ajs.xlsx"
+
+#
+defJp1AjsName: "jp1ajs.txt"
+
+#
+debug: false
+autoFill: false

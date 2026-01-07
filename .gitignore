@@ -1,0 +1,49 @@
+
+ExcelJp1Ajs.xlsx
+Book1.xlsx
+
+~*.xlsx
+
+# === Go Build Artifacts ===
+# ビルド生成物（実行ファイル）
+*.exe
+*.exe~
+!build-excel.exe
+*.dll
+*.so
+*.dylib
+
+# Go build result (default output)
+# (main.go などで `go build` するとできる実行ファイル）
+main
+app
+*.out
+
+# === Test & Coverage ===
+*.test
+coverage.out
+
+# === Vendor (必要ならコメント解除) ===
+# vendor/
+
+# === OS / Editor / IDE ===
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# JetBrains Goland
+.idea/
+
+# === Go Workspaces ===
+go.work
+go.work.sum
+
+# === Logs / Temp ===
+*.log
+*.tmp
+*.cache
