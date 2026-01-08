@@ -84,9 +84,22 @@ type JobUnit struct {
 	Cm               string // cm: コメント（ユニットの説明）
 	Ha               string // ha: ホストエージェント名（実行先ホスト）
 	Te               string // te: 実行ファイル名（スクリプトパス）
+	Sc               string
 	Tho              string // tho: タイムアウト時間（分）
 	Eu               string // eu: 実行ユーザー種別（ent: 登録ユーザーなど）
 	Un               string // un: 実行ユーザー名
+	UnitAbsoluteName string // ユニットの絶対パス名
+}
+
+type FlckUnit struct {
+	UnitName         string
+	Ty               string
+	Cm               string
+	Flwf             string
+	Flwc             string
+	Flco             string
+	Flwi             string
+	Eu               string
 	UnitAbsoluteName string // ユニットの絶対パス名
 }
 

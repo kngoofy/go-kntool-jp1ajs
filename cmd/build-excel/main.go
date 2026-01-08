@@ -133,31 +133,11 @@ func main() {
 	// JP1/AJSユニット定義のパース
 	// =========================================================================
 	// ユニット定義ファイルを読み込み、抽象構文木と行データを取得
-	unitBlock, lines := build_jp1ajs_model(cfg.DefDataDir + cfg.DefJp1AjsName)
+	unitBlock, lines, flckStack, arStack, netStack, jobStack := build_jp1ajs_model(cfg.DefDataDir + cfg.DefJp1AjsName)
 	_ = unitBlock // 抽象構文木（将来拡張用に保持）
 
 	// グローバル変数に列幅自動調整フラグを設定
 	isAutoFitColumn = cfg.AutoFill
-
-	// =========================================================================
-	// ※ HULFT定義ファイルの読み込み（コメントアウト）
-	// 各HULFT定義ファイル(SND/RCV/JOB等)からモデルとデータを読み込む
-	// モデル: ファイル定義情報のモデル構造体
-	// データ: ファイル内の個別データの配列
-	// =========================================================================
-	// snd_model, rcv_model, job_model, hst_model, tgrp_model, fmt_model, mfmt_model, trg_model,
-	// 	snd_data, rcv_data, job_data, hst_data, tgrp_data, fmt_data, mfmt_data, trg_data :=
-	// 	build_hulft_model(
-	// 		cfg.DefDataDir,
-	// 		cfg.DefSndName,
-	// 		cfg.DefRcvName,
-	// 		cfg.DefJobName,
-	// 		cfg.DefHstName,
-	// 		cfg.DefTgrpName,
-	// 		cfg.DefFmtName,
-	// 		cfg.DefMfmtName,
-	// 		cfg.DefTgrpName,
-	// 	)
 
 	// =========================================================================
 	// Excelテンプレートファイルを開く
@@ -185,50 +165,19 @@ func main() {
 	// =========================================================================
 	// 各シートの更新
 	// =========================================================================
+
+	// _ = arStack
+	// _ = netStack
+	// _ = jobStack
+
+	update_sheet_net(f, netStack, styleMap)
+	update_sheet_job(f, jobStack, styleMap)
+	update_sheet_file(f, flckStack, styleMap)
+
+	update_sheet_next(f, arStack, styleMap)
+
 	// JP1/AJSユニット定義プリントシートを更新
 	update_sheet_ajsprint(f, lines, styleMap)
-
-	// =========================================================================
-	// ※ HULFT各シートの更新（コメントアウト）
-	// モデル情報をそれぞれのシートに書き込む
-	// =========================================================================
-	// // SND(送信)シートを更新
-	// update_sheet_snd(f, snd_model, styleMap)
-	// // RCV(受信)シートを更新
-	// update_sheet_rcv(f, rcv_model, styleMap)
-	// // HST(ホスト)シートを更新
-	// update_sheet_hst(f, hst_model, styleMap)
-	// // TGRP(転送グループ)シートを更新
-	// update_sheet_tgrp(f, tgrp_model, styleMap)
-	// // JOB(ジョブ)シートを更新
-	// update_sheet_job(f, job_model, styleMap)
-	// // FMT(フォーマット)シートを更新
-	// update_sheet_fmt(f, fmt_model, styleMap)
-	// // MFMT(マッピングフォーマット)シートを更新
-	// update_sheet_mfmt(f, mfmt_model, styleMap)
-	// // TRG(トリガー)シートを更新
-	// update_sheet_trg(f, trg_model, styleMap)
-
-	// =========================================================================
-	// ※ HULFT各シートの詳細データ(DEF)更新（コメントアウト）
-	// 個別データ情報をシートに書き込む
-	// =========================================================================
-	// // SND詳細データを更新
-	// update_sheet_snd_def(f, snd_data, styleMap)
-	// // RCV詳細データを更新
-	// update_sheet_rcv_def(f, rcv_data, styleMap)
-	// // HST詳細データを更新
-	// update_sheet_hst_def(f, hst_data, styleMap)
-	// // TGRP詳細データを更新
-	// update_sheet_tgrp_def(f, tgrp_data, styleMap)
-	// // JOB詳細データを更新
-	// update_sheet_job_def(f, job_data, styleMap)
-	// // FMT詳細データを更新
-	// update_sheet_fmt_def(f, fmt_data, styleMap)
-	// // MFMT詳細データを更新
-	// update_sheet_mfmt_def(f, mfmt_data, styleMap)
-	// // TRG詳細データを更新
-	// update_sheet_trg_def(f, trg_data, styleMap)
 
 	// =========================================================================
 	// Indexシートの更新

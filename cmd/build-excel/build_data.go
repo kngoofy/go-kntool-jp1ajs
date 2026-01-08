@@ -33,7 +33,8 @@ import (
 //  1. ユニット定義ファイルをオープン
 //  2. control.ParseFileでパースし、抽象構文木と行データを取得
 //  3. 構築したモデルを返却
-func build_jp1ajs_model(file string) (*model.UnitBlock, []string) {
+func build_jp1ajs_model(file string) (*model.UnitBlock, []string, []model.FlckUnit,
+	[]model.ArParm, []model.NetUnit, []model.JobUnit) {
 	// -------------------------------------------------------------------------
 	// [1].JP1/AJSのユニット定義ファイルをOpen
 	// -------------------------------------------------------------------------
@@ -57,22 +58,18 @@ func build_jp1ajs_model(file string) (*model.UnitBlock, []string) {
 	_ = root  // 未使用警告を抑制（呼び出し元で使用）
 	_ = lines // 未使用警告を抑制（呼び出し元で使用）
 
-	// -------------------------------------------------------------------------
-	// [3].パース結果を表示（デバッグ用 - コメントアウト）
-	// -------------------------------------------------------------------------
-	// 構築された抽象構文木をツリー形式で標準出力に表示
-	// fmt.Println("\n- 抽象構文木 -")
-	// control.PrintAST(root, 0)
+	flckStack := []model.FlckUnit{}
+	control.FLCKList(root, &flckStack)
 
-	// -------------------------------------------------------------------------
-	// [4].読込み組み立てたユニット定義ファイルを表示（デバッグ用 - コメントアウト）
-	// -------------------------------------------------------------------------
-	// パース時に取得した各行を順番に表示
-	// fmt.Println("\n- JP1/AJSのユニット定義ファイル -")
-	// control.PrintLines(lines)
+	arStack := []model.ArParm{}
+	control.ArList(root, &arStack)
+
+	jobStack := []model.JobUnit{}
+	netStack := []model.NetUnit{}
+	control.JobList(root, &jobStack, &netStack)
 
 	// -------------------------------------------------------------------------
 	// 構築したモデルを返却
 	// -------------------------------------------------------------------------
-	return root, lines
+	return root, lines, flckStack, arStack, netStack, jobStack
 }

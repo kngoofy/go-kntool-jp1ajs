@@ -221,7 +221,7 @@ func PrintLines(lines []string) {
 // =============================================================================
 var (
 	// re_FLCK: FLCKユニット名にマッチする正規表現（FLCK_で始まるユニット）
-	re_FLCK = regexp.MustCompile(`FLCK_*`)
+	// re_FLCK = regexp.MustCompile(`FLCK_*`)
 	// re_ar: AR（先行・後続）パラメータの存在チェック用
 	re_ar = regexp.MustCompile(`ar=\(*`)
 	// re_arParm: ARパラメータの詳細抽出用
@@ -242,12 +242,53 @@ var (
 // 処理概要:
 //  1. ユニット名がFLCK_で始まる場合、結果スライスに追加
 //  2. 子ノードに対して再帰的に同じ処理を実行
-func FLCKList(b *model.UnitBlock, f *[]*model.UnitBlock) {
-	// ユニット名がFLCKパターンにマッチするかチェック
-	if re_FLCK.MatchString(b.UnitName) {
-		// マッチした場合、結果スライスに追加
-		*f = append(*f, b)
+func FLCKList(b *model.UnitBlock, f *[]model.FlckUnit) {
+
+	isFlck := false
+
+	// ユニット種別を判定
+	for _, r := range b.ContentLine {
+		if strings.Contains(r, "ty=flwj") {
+			isFlck = true
+		}
 	}
+
+	if isFlck {
+		_flckUnit := model.FlckUnit{
+			UnitName:         b.UnitName,
+			Ty:               "jflwj",
+			UnitAbsoluteName: b.UnitAbsoluteName,
+		}
+
+		// _ = _flckUnit
+
+		for _, r := range b.ContentLine {
+			switch {
+			case strings.Contains(r, "cm="):
+				_flckUnit.Cm = strings.Split(r, "\"")[1]
+			case strings.Contains(r, "flwf="):
+				_flckUnit.Flwf = strings.Split(r, "\"")[1]
+			case strings.Contains(r, "flwc="):
+				_flckUnit.Flwc = strings.Split(r, "=")[1]
+				_flckUnit.Flwc = _flckUnit.Flwc[:len(_flckUnit.Flwc)-1]
+			case strings.Contains(r, "flco="):
+				_flckUnit.Flco = strings.Split(r, "=")[1]
+				_flckUnit.Flco = _flckUnit.Flco[:len(_flckUnit.Flco)-1]
+			case strings.Contains(r, "flwi="):
+				_flckUnit.Flwi = strings.Split(r, "=")[1]
+				_flckUnit.Flwi = _flckUnit.Flwi[:len(_flckUnit.Flwi)-1]
+			case strings.Contains(r, "eu="):
+				_flckUnit.Eu = strings.Split(r, "=")[1]
+				_flckUnit.Eu = _flckUnit.Eu[:len(_flckUnit.Eu)-1]
+			}
+		}
+
+		*f = append(*f, _flckUnit)
+	}
+
+	// if re_FLCK.MatchString(b.UnitName) {
+	// 	// マッチした場合、結果スライスに追加
+	// }
 
 	// 子ノードに対して再帰呼び出し
 	for _, child := range b.Children {
