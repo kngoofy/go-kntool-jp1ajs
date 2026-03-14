@@ -1,95 +1,125 @@
 package main
 
+import (
+	"fmt"
+	"log"
+
+	"github.com/xuri/excelize/v2"
+)
+
+func main() {
+
+	f := excelize.NewFile()
+
+	lineWidth := 1.2
+
+	err := f.AddShape("Sheet1",
+		&excelize.Shape{
+			Cell: "G6",
+			Type: "rect",
+			Line: excelize.ShapeLine{Color: "4286F4", Width: &lineWidth},
+			Fill: excelize.Fill{Color: []string{"8EB9FF"}},
+			Paragraph: []excelize.RichTextRun{
+				{
+					Text: "Rectangle Shape",
+					Font: &excelize.Font{
+						Bold:      true,
+						Italic:    true,
+						Family:    "Times New Roman",
+						Size:      18,
+						Color:     "777777",
+						Underline: "sng",
+					},
+				},
+			},
+			Width:  180,
+			Height: 40,
+		},
+	)
+	_ = err
+
+
+
+	// 保存
+	if err := f.SaveAs("connector_auto.xlsx"); err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("connector_auto.xlsx を作成しました")
+}
+
+
+
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
-	"strings"
+	"log"
+
+	"github.com/xuri/excelize/v2"
 )
 
-type Block struct {
-	Name     string
-	Content  string
-	Children []*Block
+// セル座標をピクセル位置に変換する（簡易版）
+func cellToPixels(col, row int) (x, y int) {
+	// Excel のデフォルト列幅は約 64px、高さは約 20px（フォントによって変動）
+	const colWidth = 64
+	const rowHeight = 20
+	x = (col - 1) * colWidth
+	y = (row - 1) * rowHeight
+	return
 }
 
 func main() {
-	root := parseFile("input.txt")
-	printAST(root, 0)
-}
+	f := excelize.NewFile()
 
-func parseFile(path string) *Block {
-	f, err := os.Open(path)
+	// 開始セルと終了セル
+	startCell := "A1"
+	endCell := "D5"
+
+	// セル座標を列番号・行番号に変換
+	startCol, startRow, err := excelize.CellNameToCoordinates(startCell)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	defer f.Close()
+	endCol, endRow, err := excelize.CellNameToCoordinates(endCell)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	scanner := bufio.NewScanner(f)
+	// ピクセル座標に変換
+	startX, startY := cellToPixels(startCol, startRow)
+	endX, endY := cellToPixels(endCol, endRow)
 
-	root := &Block{Name: "root"}
-	stack := []*Block{root}
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		trim := strings.TrimSpace(line)
-
-		// ブロック開始
-		if strings.Contains(trim, "{") {
-			beforeBrace := strings.TrimSpace(trim[:strings.Index(trim, "{")])
-
-			newBlock := &Block{Name: beforeBrace}
-			parent := stack[len(stack)-1]
-			parent.Children = append(parent.Children, newBlock)
-
-			stack = append(stack, newBlock)
-
-			// 行末に残りのテキストがあれば Content に入れる
-			after := strings.TrimSpace(trim[strings.Index(trim, "{")+1:])
-			if after != "" && after != "}" {
-				newBlock.Content += after + "\n"
+	// コネクタ図形 JSON
+	connector := fmt.Sprintf(`{
+		"type": "connector",
+		"connector": {
+			"shape": "straight"
+		},
+		"style": {
+			"line": {
+				"color": "#FF0000",
+				"width": 2
 			}
-
-			// 単行で閉じている場合
-			if strings.Contains(trim, "}") {
-				stack = stack[:len(stack)-1]
-			}
-
-			continue
+		},
+		"from": {
+			"x": %d,
+			"y": %d
+		},
+		"to": {
+			"x": %d,
+			"y": %d
 		}
+	}`, startX, startY, endX, endY)
 
-		// ブロック終了
-		if strings.Contains(trim, "}") {
-			stack = stack[:len(stack)-1]
-			continue
-		}
-
-		// ブロック内の通常行
-		if len(stack) > 1 {
-			stack[len(stack)-1].Content += trim + "\n"
-		}
+	// コネクタ追加
+	if err := f.AddShape("Sheet1", "A1", connector); err != nil {
+		log.Fatal(err)
 	}
 
-	return root
-}
+	// 保存
+	if err := f.SaveAs("connector_auto.xlsx"); err != nil {
+		log.Fatal(err)
+	}
 
-func printAST(b *Block, indent int) {
-	prefix := strings.Repeat("  ", indent)
-	fmt.Printf("%sBlock: %s\n", prefix, b.Name)
-	if strings.TrimSpace(b.Content) != "" {
-		fmt.Printf("%s  Content:\n%s%s\n", prefix, prefix, indentText(b.Content, prefix+"    "))
-	}
-	for _, child := range b.Children {
-		printAST(child, indent+1)
-	}
-}
-
-func indentText(text, indent string) string {
-	lines := strings.Split(text, "\n")
-	for i := range lines {
-		lines[i] = indent + lines[i]
-	}
-	return strings.Join(lines, "\n")
+	fmt.Println("connector_auto.xlsx を作成しました")
 }
